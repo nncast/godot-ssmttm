@@ -1,15 +1,17 @@
 [gd_scene format=3 uid="uid://dtitle0001"]
 
-[ext_resource type="Script" path="res://ui/title_screen/title_screen.gd" id="1_title"]
+[ext_resource type="Script" uid="uid://hyep0gpoy4np" path="res://ui/title_screen/title_screen.gd" id="1_title"]
 
-[node name="TitleScreen" type="Control"]
+[node name="TitleScreen" type="Control" unique_id=1703636514]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_title")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1250603707]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -20,54 +22,54 @@ offset_left = -140.0
 offset_top = -160.0
 offset_right = 140.0
 offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="Title" type="Label" parent="VBox" unique_id=30423465]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "SSMTTM"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="VBox"]
+[node name="Subtitle" type="Label" parent="VBox" unique_id=644408149]
 layout_mode = 2
 text = "Sili-Sili Maanghang, Tubig-Tubig Malamig"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="NameRow" type="HBoxContainer" parent="VBox"]
+[node name="NameRow" type="HBoxContainer" parent="VBox" unique_id=1308386920]
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="VBox/NameRow"]
+[node name="NameLabel" type="Label" parent="VBox/NameRow" unique_id=1965118681]
 layout_mode = 2
 text = "Name:"
 
-[node name="NameEdit" type="LineEdit" parent="VBox/NameRow"]
+[node name="NameEdit" type="LineEdit" parent="VBox/NameRow" unique_id=1359468367]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Your name"
 
-[node name="HostButton" type="Button" parent="VBox"]
+[node name="HostButton" type="Button" parent="VBox" unique_id=913935459]
 layout_mode = 2
 text = "Host Game"
 
-[node name="JoinButton" type="Button" parent="VBox"]
+[node name="JoinButton" type="Button" parent="VBox" unique_id=100553706]
 layout_mode = 2
 text = "Join Game"
 
-[node name="SettingsButton" type="Button" parent="VBox"]
+[node name="SettingsButton" type="Button" parent="VBox" unique_id=316910046]
 layout_mode = 2
 text = "Settings"
 
-[node name="ExitButton" type="Button" parent="VBox"]
+[node name="ExitButton" type="Button" parent="VBox" unique_id=2003637775]
 layout_mode = 2
 text = "Exit"
 
-[node name="StatusLabel" type="Label" parent="VBox"]
+[node name="StatusLabel" type="Label" parent="VBox" unique_id=480226216]
 layout_mode = 2
 autowrap_mode = 2
-text = ""
 
-[node name="JoinPanel" type="PanelContainer" parent="."]
-visible = false
+[node name="JoinPanel" type="PanelContainer" parent="." unique_id=1759550424]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -78,35 +80,36 @@ offset_left = -110.0
 offset_top = -50.0
 offset_right = 110.0
 offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="JoinPanel"]
+[node name="VBox" type="VBoxContainer" parent="JoinPanel" unique_id=839750030]
 layout_mode = 2
 
-[node name="CodeLabel" type="Label" parent="JoinPanel/VBox"]
+[node name="CodeLabel" type="Label" parent="JoinPanel/VBox" unique_id=934805568]
 layout_mode = 2
 text = "Enter 4-digit lobby code"
 horizontal_alignment = 1
 
-[node name="CodeEdit" type="LineEdit" parent="JoinPanel/VBox"]
+[node name="CodeEdit" type="LineEdit" parent="JoinPanel/VBox" unique_id=1770047378]
 layout_mode = 2
-max_length = 4
 placeholder_text = "0000"
-horizontal_alignment = 1
+max_length = 4
 
-[node name="ButtonsRow" type="HBoxContainer" parent="JoinPanel/VBox"]
+[node name="ButtonsRow" type="HBoxContainer" parent="JoinPanel/VBox" unique_id=1898757295]
 layout_mode = 2
 
-[node name="JoinConfirmButton" type="Button" parent="JoinPanel/VBox/ButtonsRow"]
+[node name="JoinConfirmButton" type="Button" parent="JoinPanel/VBox/ButtonsRow" unique_id=1967562336]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Join"
 
-[node name="JoinCancelButton" type="Button" parent="JoinPanel/VBox/ButtonsRow"]
+[node name="JoinCancelButton" type="Button" parent="JoinPanel/VBox/ButtonsRow" unique_id=1600521816]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Cancel"
 
-[node name="ExitConfirm" type="ConfirmationDialog" parent="."]
+[node name="ExitConfirm" type="ConfirmationDialog" parent="." unique_id=515213007]
 title = "Exit"
 initial_position = 1
 size = Vector2i(300, 100)

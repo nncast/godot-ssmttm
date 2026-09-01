@@ -1,8 +1,8 @@
 [gd_scene format=4 uid="uid://dyl25naybr5hj"]
 
-[ext_resource type="Texture2D" uid="uid://cpmhxrmfs1jhf" path="res://assets/sprites/prototype/tilemap/free_pixel_16_woods.png" id="2_kbqwo"]
+[ext_resource type="Texture2D" uid="uid://cpmhxrmfs1jhf" path="res://assets/tilemap/free_pixel_16_woods.png" id="2_kbqwo"]
 [ext_resource type="Script" uid="uid://cn07pyir63tjd" path="res://levels/over.gd" id="3_kbqwo"]
-[ext_resource type="Script" path="res://levels/multiplayer_arena.gd" id="6_arena2"]
+[ext_resource type="Script" uid="uid://uq3omdhc1jx3" path="res://levels/multiplayer_arena.gd" id="6_arena2"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_klak6"]
 tile_data = PackedInt32Array(65536, 1114112, 1, 131072, 1114112, 2, 196608, 1114112, 3, 1, 1179648, 0, 65537, 1179648, 1, 131073, 1179648, 2, 196609, 1179648, 3, 2, 1245184, 0, 65538, 1245184, 1, 131074, 1245184, 2, 196610, 1245184, 3, 65539, 1310720, 1, 131075, 1310720, 2, 196611, 1310720, 3)

@@ -1,7 +1,7 @@
 [gd_scene format=4 uid="uid://dyl25naybr5hj"]
 
 [ext_resource type="PackedScene" uid="uid://c5kg20u5shgks" path="res://entities/player/player.tscn" id="1_klak6"]
-[ext_resource type="Texture2D" uid="uid://cpmhxrmfs1jhf" path="res://assets/sprites/prototype/tilemap/free_pixel_16_woods.png" id="2_kbqwo"]
+[ext_resource type="Texture2D" uid="uid://cpmhxrmfs1jhf" path="res://assets/tilemap/free_pixel_16_woods.png" id="2_kbqwo"]
 [ext_resource type="Script" uid="uid://cn07pyir63tjd" path="res://levels/over.gd" id="3_kbqwo"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_klak6"]
