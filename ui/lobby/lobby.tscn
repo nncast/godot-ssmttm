@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://dlobby0001cc"]
+
+[ext_resource type="Script" path="res://ui/lobby/lobby.gd" id="1_lobby"]
+
+[node name="Lobby" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_lobby")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -140.0
+offset_right = 160.0
+offset_bottom = 140.0
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Lobby"
+horizontal_alignment = 1
+
+[node name="CodeLabel" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+text = ""
+
+[node name="PlayerList" type="ItemList" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 140)
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = ""
+
+[node name="StartButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Start Match"
+visible = false
+
+[node name="LeaveButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Leave"

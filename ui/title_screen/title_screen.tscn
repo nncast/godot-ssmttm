@@ -1,0 +1,113 @@
+[gd_scene format=3 uid="uid://dtitle0001"]
+
+[ext_resource type="Script" path="res://ui/title_screen/title_screen.gd" id="1_title"]
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_title")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -160.0
+offset_right = 140.0
+offset_bottom = 160.0
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "SSMTTM"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Sili-Sili Maanghang, Tubig-Tubig Malamig"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="NameRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="VBox/NameRow"]
+layout_mode = 2
+text = "Name:"
+
+[node name="NameEdit" type="LineEdit" parent="VBox/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Your name"
+
+[node name="HostButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Host Game"
+
+[node name="JoinButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Join Game"
+
+[node name="SettingsButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Settings"
+
+[node name="ExitButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Exit"
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = ""
+
+[node name="JoinPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = -50.0
+offset_right = 110.0
+offset_bottom = 50.0
+
+[node name="VBox" type="VBoxContainer" parent="JoinPanel"]
+layout_mode = 2
+
+[node name="CodeLabel" type="Label" parent="JoinPanel/VBox"]
+layout_mode = 2
+text = "Enter 4-digit lobby code"
+horizontal_alignment = 1
+
+[node name="CodeEdit" type="LineEdit" parent="JoinPanel/VBox"]
+layout_mode = 2
+max_length = 4
+placeholder_text = "0000"
+horizontal_alignment = 1
+
+[node name="ButtonsRow" type="HBoxContainer" parent="JoinPanel/VBox"]
+layout_mode = 2
+
+[node name="JoinConfirmButton" type="Button" parent="JoinPanel/VBox/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Join"
+
+[node name="JoinCancelButton" type="Button" parent="JoinPanel/VBox/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancel"
+
+[node name="ExitConfirm" type="ConfirmationDialog" parent="."]
+title = "Exit"
+initial_position = 1
+size = Vector2i(300, 100)
+dialog_text = "Are you sure you want to exit?"
