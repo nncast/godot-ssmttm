@@ -81,11 +81,11 @@ func _physics_process(delta: float) -> void:
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 
-	# Burning = rooted. Can't walk, run, or rescue anyone else until a
-	# teammate cools you down.
-	if heat_status.is_burning():
+	# Burning/Dead = rooted. Can't walk, run, or rescue anyone else. Dead is
+	# permanent; Burning can still be saved by a teammate before it expires.
+	if heat_status.is_incapacitated():
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
-		animated_sprite.play("idle_" + last_direction)
+		_play_heat_animation()
 		move_and_slide()
 		_cancel_rescue_channel()
 		return
@@ -252,12 +252,20 @@ func _update_hearts(rescues_remaining: int) -> void:
 
 
 func _on_heat_state_changed(new_state: HeatStatus.State) -> void:
-	# Simple placeholder feedback until dedicated burning art/VFX exist.
-	match new_state:
-		HeatStatus.State.NORMAL:
-			animated_sprite.modulate = Color(1, 1, 1)
-		HeatStatus.State.BURNING:
-			animated_sprite.modulate = Color(1, 0.15, 0.15)
+	if new_state == HeatStatus.State.BURNING:
+		animated_sprite.play("heat_" + last_direction)
+
+
+## Keeps the burn animation matched to whichever direction the player was
+## last facing, and freezes it once they're Dead instead of looping forever.
+func _play_heat_animation() -> void:
+	var anim := "heat_" + last_direction
+	if heat_status.is_dead():
+		if animated_sprite.animation != anim:
+			animated_sprite.play(anim)
+		animated_sprite.pause()
+	elif animated_sprite.animation != anim or not animated_sprite.is_playing():
+		animated_sprite.play(anim)
 
 
 ## Broadcast by whoever is channeling a rescue ON this Tubig, so the

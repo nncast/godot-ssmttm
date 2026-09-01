@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bv8gkjm5q6bm2" path="res://entities/sili/sili.gd" id="1_g2els"]
 [ext_resource type="Texture2D" uid="uid://svjg5tu7bty7" path="res://assets/sprites/16x16 Sili.png" id="2_ngt5k"]
+[ext_resource type="Texture2D" uid="uid://dtvw0tpx85yol" path="res://assets/ui/stamina.png" id="3_ka3ma"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_q0jn0"]
 atlas = ExtResource("2_ngt5k")
@@ -593,15 +594,34 @@ radius = 12.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track0"]
 bg_color = Color(0, 0, 0, 0.55)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+corner_detail = 12
+expand_margin_left = 2.0
+expand_margin_top = 3.0
+expand_margin_right = 3.0
+expand_margin_bottom = 3.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d4qa6"]
-bg_color = Color(0.8901961, 0.20392157, 0.1882353, 1)
+bg_color = Color(1, 0.84313726, 0, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+corner_detail = 20
 
 [node name="player" type="CharacterBody2D" unique_id=248945563]
 script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2022279106]
-modulate = Color(1, 0.65, 0.6, 1)
 sprite_frames = SubResource("SpriteFrames_xy6m0")
 animation = &"idle_s"
 
@@ -629,11 +649,20 @@ shape = SubResource("CircleShape2D_tag001")
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -52.0
-offset_right = 216.0
-offset_bottom = -32.0
+offset_left = 24.0
+offset_top = -40.0
+offset_right = 224.0
+offset_bottom = -25.0
+grow_vertical = 0
 theme_override_styles/background = SubResource("StyleBoxFlat_track0")
 theme_override_styles/fill = SubResource("StyleBoxFlat_d4qa6")
 value = 100.0
 show_percentage = false
+
+[node name="TextureRect" type="TextureRect" parent="ui/StaminaBar" unique_id=1679040317]
+layout_mode = 0
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 21.0
+offset_bottom = 24.0
+texture = ExtResource("3_ka3ma")

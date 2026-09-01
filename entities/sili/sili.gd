@@ -89,7 +89,7 @@ func _try_tag(body: Node2D) -> void:
 		return
 
 	var target_heat: HeatStatus = body.get_node_or_null("HeatStatus")
-	if target_heat == null or target_heat.is_burning():
+	if target_heat == null or target_heat.is_incapacitated():
 		return
 
 	if multiplayer.has_multiplayer_peer():

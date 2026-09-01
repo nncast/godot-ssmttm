@@ -103,6 +103,7 @@ func _watch_tubig_team() -> void:
 		var heat: HeatStatus = tubig.get_node_or_null("HeatStatus")
 		if heat:
 			heat.burned.connect(_check_for_sili_win)
+			heat.died.connect(_check_for_sili_win)
 	_build_team_panel()
 
 
@@ -137,7 +138,13 @@ func _build_team_panel() -> void:
 
 		var heat: HeatStatus = tubig.get_node_or_null("HeatStatus")
 		var update_dot := func(new_state):
-			status_dot.color = Color(0.85, 0.2, 0.2) if new_state == HeatStatus.State.BURNING else Color(0.3, 0.85, 0.4)
+			match new_state:
+				HeatStatus.State.BURNING:
+					status_dot.color = Color(0.9, 0.55, 0.15)  # orange - still savable
+				HeatStatus.State.DEAD:
+					status_dot.color = Color(0.15, 0.15, 0.15)  # black - gone for good
+				_:
+					status_dot.color = Color(0.3, 0.85, 0.4)  # green - free
 		if heat:
 			heat.state_changed.connect(update_dot)
 			update_dot.call(heat.state)
@@ -156,7 +163,7 @@ func _check_for_sili_win() -> void:
 		if not is_instance_valid(tubig):
 			continue
 		var heat: HeatStatus = tubig.get_node_or_null("HeatStatus")
-		if heat and not heat.is_burning():
+		if heat and heat.state == HeatStatus.State.NORMAL:
 			return  # at least one Tubig is still free
 	MatchManager.end_match(true)
 
