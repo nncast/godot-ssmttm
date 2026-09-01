@@ -5,6 +5,26 @@
 [ext_resource type="Script" uid="uid://duetnyqgviwey" path="res://entities/tubig/heat_status.gd" id="5_heat0"]
 [ext_resource type="Texture2D" uid="uid://oqaiyhssut2i" path="res://icon.svg" id="6_icon0"]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_qd4cw"]
+atlas = ExtResource("2_qd4cw")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r3jhm"]
+atlas = ExtResource("2_qd4cw")
+region = Rect2(96, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b82xr"]
+atlas = ExtResource("2_qd4cw")
+region = Rect2(72, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m1ia1"]
+atlas = ExtResource("2_qd4cw")
+region = Rect2(0, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cgbc2"]
+atlas = ExtResource("2_qd4cw")
+region = Rect2(24, 0, 24, 24)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_154gd"]
 atlas = ExtResource("2_qd4cw")
 region = Rect2(192, 24, 24, 24)
@@ -287,6 +307,46 @@ region = Rect2(168, 48, 24, 24)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_xy6m0"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qd4cw")
+}],
+"loop": 1,
+"name": &"heat_e",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r3jhm")
+}],
+"loop": 1,
+"name": &"heat_n",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b82xr")
+}],
+"loop": 1,
+"name": &"heat_ne",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m1ia1")
+}],
+"loop": 1,
+"name": &"heat_s",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cgbc2")
+}],
+"loop": 1,
+"name": &"heat_se",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_154gd")
@@ -615,7 +675,7 @@ script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2022279106]
 sprite_frames = SubResource("SpriteFrames_xy6m0")
-animation = &"idle_s"
+animation = &"heat_se"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1702269096]
 position = Vector2(0, 4)
