@@ -1,5 +1,14 @@
 extends CharacterBody2D
 
+## After arriving, E is dead for this long. Without it the arrival mouth
+## registers you instantly and the next tap bounces you straight back.
+const TUNNEL_COOLDOWN := 1.0
+
+## Tunnel trips per match. The cooldown alone only slows spamming down; a hard
+## budget is what makes reaching a mouth a decision rather than a free reset
+## button you mash every time the Sili gets close.
+const TUNNEL_USES_MAX := 3
+
 const WALK_SPEED = 100.0
 const RUN_SPEED = 180.0
 const FRICTION = 1200.0
@@ -14,11 +23,20 @@ const FRICTION = 1200.0
 @export var MAX_RESCUES: int = 3
 @export var RESCUE_CHANNEL_TIME: float = 6.0  # seconds, per doc's 5-8s range
 
+## --- Stealth ---
+@export var CONCEAL_SETTLE_TIME: float = 0.35  # how long you must hold still inside a hiding spot
+@export var CONCEALED_SPRITE_ALPHA: float = 0.55  # local-only feedback, not real invisibility
+
+## --- Sili spotting ---
+@export var SIGHTING_INTERVAL: float = 0.15  # how often we re-check if the Sili is on screen
+@export var SIGHTING_MARGIN: float = 0.08    # ignore the outer 8% of the screen edge
+
 signal stamina_changed(current_stamina: float, max_stamina: float)
 signal exhausted
 signal recovered_from_exhaustion
 signal rescues_changed(rescues_left: int)
 signal rescue_progress(progress: float)  # 0.0 - 1.0, for a channel bar
+signal concealment_changed(is_concealed: bool)
 
 var stamina: float = MAX_STAMINA
 var is_exhausted: bool = false
@@ -35,10 +53,26 @@ var rescues_left: int = MAX_RESCUES:
 		rescues_left = value
 		rescues_changed.emit(value)
 
+## Replicated (see tubig.tscn's MPSync) because the mini-map has to hide this
+## player's dot on EVERY peer's screen, not just their own. Same property-with-
+## setter trick as rescues_left: MultiplayerSynchronizer assigns it directly on
+## remote peers, and routing through the setter keeps concealment_changed firing
+## everywhere instead of only where the value was first computed.
+var is_concealed: bool = false:
+	set(value):
+		if value == is_concealed:
+			return
+		is_concealed = value
+		concealment_changed.emit(value)
+
 var _rescue_target: Node2D = null
 var _rescue_timer: float = 0.0
 var _is_channeling: bool = false
 var _progress_broadcast_accum: float = 0.0
+var _conceal_timer: float = 0.0
+var _sighting_accum: float = 0.0
+var _last_reported_sighting: bool = false
+var _hidden_label: Label = null
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ui_layer: CanvasLayer = $ui
@@ -47,16 +81,20 @@ var _progress_broadcast_accum: float = 0.0
 @onready var hearts: Array = [$ui/HeartsRow/Heart1, $ui/HeartsRow/Heart2, $ui/HeartsRow/Heart3]
 @onready var heat_status: HeatStatus = $HeatStatus
 @onready var interaction_area: Area2D = $InteractionArea
+
+## Set by whichever Tunnel mouth we're standing in - see tunnel.gd. Null means
+## there's nothing to travel through.
+var _nearby_tunnel: Tunnel = null
+var _tunnel_cooldown: float = 0.0
+var _tunnel_prompt: Label = null
+## Tracked per Tubig and spent locally, like stamina. Players are rebuilt when
+## the arena reloads, so a replay hands everyone a fresh set.
+var tunnel_uses_left: int = TUNNEL_USES_MAX
 @onready var rescue_indicator: ProgressBar = $RescueIndicator
 @onready var rescue_indicator_label: Label = $RescueIndicator/RescueLabel
 
 
 func _ready() -> void:
-	# Every spawned character has its own HUD CanvasLayer, but a CanvasLayer
-	# always draws full-screen regardless of which node it's attached to - so
-	# without this, every remote player's stamina bar would draw stacked on
-	# top of yours in the same screen spot. Only the locally-controlled
-	# character's HUD should ever be visible.
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		ui_layer.visible = false
 
@@ -69,34 +107,85 @@ func _ready() -> void:
 	rescue_bar.visible = false
 	rescue_progress.connect(_on_rescue_progress)
 	rescues_changed.connect(_on_rescues_changed)
-	_update_hearts(rescues_left)
+
+	# Fixed: Do not call _update_hearts(rescues_left) here to preserve default texture colors.
 
 	rescue_indicator.visible = false
 
+	_build_hidden_label()
+	concealment_changed.connect(_on_concealment_changed)
+
 	add_to_group("player")  # keeps compatibility with the canopy fade (over.gd)
 	add_to_group("tubig")
+
+	# Footsteps run for every character on screen, not just ours - hearing
+	# someone sprint past on gravel is half the game. Only the local player
+	# gets the ocean ambience, though.
+	var surface_audio := SurfaceAudio.new()
+	surface_audio.name = "SurfaceAudio"
+	surface_audio.setup(
+		self,
+		not multiplayer.has_multiplayer_peer() or is_multiplayer_authority(),
+		(WALK_SPEED + RUN_SPEED) * 0.5)
+	add_child(surface_audio)
+
+
+func _build_hidden_label() -> void:
+	_hidden_label = Label.new()
+	_hidden_label.text = "HIDDEN"
+	_hidden_label.visible = false
+	_hidden_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_hidden_label.offset_left = -60.0
+	_hidden_label.offset_top = -130.0
+	_hidden_label.offset_right = 60.0
+	_hidden_label.offset_bottom = -105.0
+	_hidden_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hidden_label.add_theme_font_size_override("font_size", 16)
+	_hidden_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.7))
+	ui_layer.add_child(_hidden_label)
+
+
+func _on_concealment_changed(concealed: bool) -> void:
+	if not multiplayer.has_multiplayer_peer() or is_multiplayer_authority():
+		animated_sprite.modulate.a = CONCEALED_SPRITE_ALPHA if concealed else 1.0
+		if _hidden_label:
+			_hidden_label.visible = concealed
 
 
 func _physics_process(delta: float) -> void:
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 
-	# Burning/Dead = rooted. Can't walk, run, or rescue anyone else. Dead is
-	# permanent; Burning can still be saved by a teammate before it expires.
+	if MatchManager.inputs_locked():
+		velocity = Vector2.ZERO
+		animated_sprite.play("idle_" + last_direction)
+		move_and_slide()
+		return
+
+	_update_sili_sighting(delta)
+
 	if heat_status.is_incapacitated():
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		_play_heat_animation()
 		move_and_slide()
 		_cancel_rescue_channel()
+		is_concealed = false
+		_conceal_timer = 0.0
 		return
 
 	var input_vector := Input.get_vector("left", "right", "up", "down")
 	var wants_to_run := Input.is_action_pressed("run") or Input.is_key_pressed(KEY_SHIFT)
 	var wants_to_rescue := Input.is_action_pressed("rescue")
 
+	_tunnel_cooldown = maxf(0.0, _tunnel_cooldown - delta)
+	if Input.is_action_just_pressed("rescue"):
+		_try_use_tunnel()
+	_update_tunnel_prompt()
+
 	var is_moving := input_vector != Vector2.ZERO
 
-	# Channeling a rescue locks you in place - moving cancels it.
+	_update_concealment(delta, is_moving)
+
 	if wants_to_rescue and not is_moving:
 		_handle_rescue_channel(delta)
 	else:
@@ -149,8 +238,6 @@ func _handle_rescue_channel(delta: float) -> void:
 	var progress: float = _rescue_timer / RESCUE_CHANNEL_TIME
 	rescue_progress.emit(progress)
 
-	# Throttled broadcast so everyone (especially the person being rescued)
-	# sees a countdown above their head, not just the rescuer's own screen.
 	_progress_broadcast_accum += delta
 	if _progress_broadcast_accum >= 0.1 or progress >= 1.0:
 		_progress_broadcast_accum = 0.0
@@ -183,6 +270,137 @@ func _cancel_rescue_channel() -> void:
 	_rescue_timer = 0.0
 	_progress_broadcast_accum = 0.0
 	rescue_progress.emit(0.0)
+
+
+# --- Stealth / hiding places ---
+
+func _update_concealment(delta: float, is_moving: bool) -> void:
+	if is_moving or _current_hiding_spot() == null:
+		_conceal_timer = 0.0
+		is_concealed = false
+		return
+
+	_conceal_timer = min(_conceal_timer + delta, CONCEAL_SETTLE_TIME)
+	is_concealed = _conceal_timer >= CONCEAL_SETTLE_TIME
+
+
+func _current_hiding_spot() -> Node2D:
+	for spot in get_tree().get_nodes_in_group("hiding_spot"):
+		if is_instance_valid(spot) and spot.contains_point(global_position):
+			return spot
+	return null
+
+
+# --- Spotting the Sili ---
+
+func _update_sili_sighting(delta: float) -> void:
+	_sighting_accum += delta
+	if _sighting_accum < SIGHTING_INTERVAL:
+		return
+	_sighting_accum = 0.0
+
+	var seen := _can_see_sili()
+	if seen == _last_reported_sighting:
+		return
+	_last_reported_sighting = seen
+	SightingTracker.report_sighting(seen)
+
+
+func _can_see_sili() -> bool:
+	var sili := get_tree().get_first_node_in_group("sili")
+	if sili == null or not is_instance_valid(sili):
+		return false
+
+	var camera: Camera2D = get_node_or_null("Camera2D")
+	if camera == null or not camera.enabled:
+		return false
+
+	var view_size: Vector2 = get_viewport_rect().size / camera.zoom
+	var margin: Vector2 = view_size * SIGHTING_MARGIN
+	var view_rect := Rect2(
+		camera.get_screen_center_position() - view_size * 0.5 + margin * 0.5,
+		view_size - margin
+	)
+	return view_rect.has_point(sili.global_position)
+
+
+func _exit_tree() -> void:
+	if not _last_reported_sighting:
+		return
+	_last_reported_sighting = false
+	if is_instance_valid(SightingTracker):
+		SightingTracker.report_sighting(false)
+
+
+## Called by Tunnel.body_entered/body_exited. The Sili has no equivalent, which
+## is exactly how the tunnel stays Tubig-only.
+func set_nearby_tunnel(tunnel: Tunnel) -> void:
+	_nearby_tunnel = tunnel
+
+
+func clear_nearby_tunnel(tunnel: Tunnel) -> void:
+	if _nearby_tunnel == tunnel:
+		_nearby_tunnel = null
+
+
+## E is shared with rescuing, so a burning ally within reach wins: a tap next
+## to someone who needs pulling out should never quietly teleport you away and
+## leave them behind. With nobody to save, the same tap takes the tunnel.
+func _try_use_tunnel() -> void:
+	if _tunnel_cooldown > 0.0 or _is_channeling or tunnel_uses_left <= 0:
+		return
+	if _nearby_tunnel == null or not is_instance_valid(_nearby_tunnel):
+		return
+	if _find_burning_ally() != null:
+		return
+
+	var destination = _nearby_tunnel.exit_position()
+	if destination == null:
+		return
+
+	# Done on our own authority and carried out by MPSync: the tunnel is a fixed
+	# pair of points baked into the level, so there is nothing here for the
+	# server to arbitrate.
+	global_position = destination
+	velocity = Vector2.ZERO
+	_tunnel_cooldown = TUNNEL_COOLDOWN
+	tunnel_uses_left -= 1
+	# Concealment means having stayed still and unseen; surfacing somewhere else
+	# across the map is neither.
+	is_concealed = false
+	_conceal_timer = 0.0
+
+
+## Shows the remaining budget rather than just the key, so the choice to spend
+## a trip is made with the count in view. Stays visible when the budget is gone,
+## reading as spent instead of silently disappearing - otherwise a player who
+## walked into a mouth would think the tunnel itself was broken.
+func _update_tunnel_prompt() -> void:
+	var should_show := _nearby_tunnel != null and _tunnel_cooldown <= 0.0
+	if _tunnel_prompt == null:
+		if not should_show:
+			return
+		_tunnel_prompt = Label.new()
+		_tunnel_prompt.name = "TunnelPrompt"
+		_tunnel_prompt.anchor_left = 0.5
+		_tunnel_prompt.anchor_right = 0.5
+		_tunnel_prompt.anchor_top = 1.0
+		_tunnel_prompt.anchor_bottom = 1.0
+		_tunnel_prompt.offset_left = -80.0
+		_tunnel_prompt.offset_right = 80.0
+		_tunnel_prompt.offset_top = -130.0
+		_tunnel_prompt.offset_bottom = -104.0
+		_tunnel_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ui_layer.add_child(_tunnel_prompt)
+	_tunnel_prompt.visible = should_show
+	if not should_show:
+		return
+	if tunnel_uses_left > 0:
+		_tunnel_prompt.text = "[E] Tunnel  (%dx)" % tunnel_uses_left
+		_tunnel_prompt.modulate = Color.WHITE
+	else:
+		_tunnel_prompt.text = "Tunnel used up"
+		_tunnel_prompt.modulate = Color(0.65, 0.65, 0.68)
 
 
 func _find_burning_ally() -> Node2D:
@@ -248,7 +466,9 @@ func _on_rescues_changed(new_rescues_left: int) -> void:
 
 func _update_hearts(rescues_remaining: int) -> void:
 	for i in hearts.size():
-		hearts[i].modulate = Color(1, 0.25, 0.35) if i < rescues_remaining else Color(0.25, 0.25, 0.25, 0.5)
+		# Fixed: Kept full white (1, 1, 1, 1) for active hearts so natural colors display,
+		# and dimmed only used/depleted hearts.
+		hearts[i].modulate = Color.WHITE if i < rescues_remaining else Color(0.25, 0.25, 0.25, 0.5)
 
 
 func _on_heat_state_changed(new_state: HeatStatus.State) -> void:
@@ -256,8 +476,6 @@ func _on_heat_state_changed(new_state: HeatStatus.State) -> void:
 		animated_sprite.play("heat_" + last_direction)
 
 
-## Keeps the burn animation matched to whichever direction the player was
-## last facing, and freezes it once they're Dead instead of looping forever.
 func _play_heat_animation() -> void:
 	var anim := "heat_" + last_direction
 	if heat_status.is_dead():
@@ -268,10 +486,6 @@ func _play_heat_animation() -> void:
 		animated_sprite.play(anim)
 
 
-## Broadcast by whoever is channeling a rescue ON this Tubig, so the
-## countdown shows above the burning player's own head - visible to
-## everyone, not just the rescuer. Any peer may call this; it's purely
-## cosmetic (no game-state change), so it isn't authority-gated.
 @rpc("any_peer", "call_local", "unreliable")
 func show_rescue_progress(progress: float, seconds_left: float) -> void:
 	rescue_indicator.visible = progress > 0.0

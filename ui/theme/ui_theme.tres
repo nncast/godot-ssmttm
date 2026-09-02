@@ -1,0 +1,24 @@
+[gd_resource type="Theme" load_steps=2 format=3]
+
+[ext_resource type="FontFile" uid="uid://dt8i0axtwshee" path="res://assets/fonts/BoldPixels.ttf" id="1_font"]
+
+[resource]
+default_font = ExtResource("1_font")
+default_font_size = 22
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 0.92, 0.62, 1)
+Button/colors/font_pressed_color = Color(1, 0.78, 0.35, 1)
+Button/colors/font_focus_color = Color(1, 0.92, 0.62, 1)
+Button/colors/font_disabled_color = Color(0.6, 0.6, 0.6, 1)
+Button/colors/font_outline_color = Color(0, 0, 0, 1)
+Button/constants/outline_size = 4
+Button/font_sizes/font_size = 30
+CheckBox/colors/font_outline_color = Color(0, 0, 0, 1)
+CheckBox/constants/outline_size = 6
+CheckBox/font_sizes/font_size = 24
+Label/colors/font_shadow_color = Color(0, 0, 0, 0.75)
+Label/constants/shadow_offset_x = 2
+Label/constants/shadow_offset_y = 2
+Label/constants/shadow_outline_size = 1
+Label/font_sizes/font_size = 22
+LineEdit/font_sizes/font_size = 22

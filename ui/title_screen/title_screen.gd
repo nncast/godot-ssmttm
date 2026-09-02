@@ -16,6 +16,7 @@ extends Control
 
 
 func _ready() -> void:
+	AudioManager.play_title_music()
 	join_panel.visible = false
 	status_label.text = ""
 

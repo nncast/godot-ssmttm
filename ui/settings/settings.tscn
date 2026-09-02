@@ -1,15 +1,32 @@
 [gd_scene format=3 uid="uid://dsettings001"]
 
-[ext_resource type="Script" path="res://ui/settings/settings.gd" id="1_settings"]
+[ext_resource type="Script" uid="uid://dbl68ci4xutn5" path="res://ui/settings/settings.gd" id="1_settings"]
+[ext_resource type="FontFile" uid="uid://dt8i0axtwshee" path="res://assets/fonts/BoldPixels.ttf" id="2_hrs25"]
 
-[node name="Settings" type="Control"]
+[node name="Settings" type="Control" unique_id=971813118]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_settings")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="BackButton" type="Button" parent="." unique_id=1177037120]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -46.0
+offset_right = 106.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_fonts/font = ExtResource("2_hrs25")
+theme_override_font_sizes/font_size = 21
+text = "Back"
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=635704460]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -17,64 +34,66 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -160.0
-offset_top = -100.0
+offset_top = -80.0
 offset_right = 160.0
-offset_bottom = 100.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="Title" type="Label" parent="VBox" unique_id=2024204180]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_fonts/font = ExtResource("2_hrs25")
+theme_override_font_sizes/font_size = 21
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="MasterRow" type="HBoxContainer" parent="VBox"]
+[node name="MasterRow" type="HBoxContainer" parent="VBox" unique_id=990449605]
 layout_mode = 2
 
-[node name="MasterLabel" type="Label" parent="VBox/MasterRow"]
-layout_mode = 2
+[node name="MasterLabel" type="Label" parent="VBox/MasterRow" unique_id=1201256176]
 custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_hrs25")
+theme_override_font_sizes/font_size = 21
 text = "Master"
 
-[node name="MasterSlider" type="HSlider" parent="VBox/MasterRow"]
+[node name="MasterSlider" type="HSlider" parent="VBox/MasterRow" unique_id=2110106605]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 1.0
 
-[node name="MusicRow" type="HBoxContainer" parent="VBox"]
+[node name="MusicRow" type="HBoxContainer" parent="VBox" unique_id=1574383108]
 layout_mode = 2
 
-[node name="MusicLabel" type="Label" parent="VBox/MusicRow"]
-layout_mode = 2
+[node name="MusicLabel" type="Label" parent="VBox/MusicRow" unique_id=1633152886]
 custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_hrs25")
+theme_override_font_sizes/font_size = 21
 text = "Music"
 
-[node name="MusicSlider" type="HSlider" parent="VBox/MusicRow"]
+[node name="MusicSlider" type="HSlider" parent="VBox/MusicRow" unique_id=647702378]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 1.0
 
-[node name="SFXRow" type="HBoxContainer" parent="VBox"]
+[node name="SFXRow" type="HBoxContainer" parent="VBox" unique_id=692161602]
 layout_mode = 2
 
-[node name="SFXLabel" type="Label" parent="VBox/SFXRow"]
-layout_mode = 2
+[node name="SFXLabel" type="Label" parent="VBox/SFXRow" unique_id=1562619795]
 custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_hrs25")
+theme_override_font_sizes/font_size = 21
 text = "SFX"
 
-[node name="SFXSlider" type="HSlider" parent="VBox/SFXRow"]
+[node name="SFXSlider" type="HSlider" parent="VBox/SFXRow" unique_id=599511195]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 1.0
-
-[node name="BackButton" type="Button" parent="VBox"]
-layout_mode = 2
-text = "Back"

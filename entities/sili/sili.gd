@@ -42,9 +42,29 @@ func _ready() -> void:
 	tag_hitbox.body_entered.connect(_on_tag_hitbox_body_entered)
 	add_to_group("sili")
 
+	# Footsteps run for every character on screen, not just ours - hearing
+	# someone sprint past on gravel is half the game. Only the local player
+	# gets the ocean ambience, though.
+	var surface_audio := SurfaceAudio.new()
+	surface_audio.name = "SurfaceAudio"
+	surface_audio.setup(
+		self,
+		not multiplayer.has_multiplayer_peer() or is_multiplayer_authority(),
+		(WALK_SPEED + RUN_SPEED) * 0.5)
+	add_child(surface_audio)
+
 
 func _physics_process(delta: float) -> void:
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		return
+
+	# Frozen (and unable to tag) during the role reveal - returning before the
+	# hitbox sweep below means a Tubig standing in the spawn ring can't be
+	# caught the instant the arena loads.
+	if MatchManager.inputs_locked():
+		velocity = Vector2.ZERO
+		animated_sprite.play("idle_" + last_direction)
+		move_and_slide()
 		return
 
 	var input_vector := Input.get_vector("left", "right", "up", "down")
@@ -55,7 +75,10 @@ func _physics_process(delta: float) -> void:
 	_update_stamina(delta, is_running)
 	_update_tag_cooldowns(delta)
 
-	var current_speed := RUN_SPEED if is_running else WALK_SPEED
+	# MatchManager ramps this up at fixed points in the match - see
+	# SILI_SPEED_STAGES. Every peer derives it from the synced clock, so the
+	# Sili moves at the same speed on everyone's screen.
+	var current_speed := (RUN_SPEED if is_running else WALK_SPEED) * MatchManager.sili_speed_multiplier()
 
 	if is_moving:
 		velocity = input_vector * current_speed

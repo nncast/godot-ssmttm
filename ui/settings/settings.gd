@@ -3,7 +3,7 @@ extends Control
 @onready var master_slider: HSlider = $VBox/MasterRow/MasterSlider
 @onready var music_slider: HSlider = $VBox/MusicRow/MusicSlider
 @onready var sfx_slider: HSlider = $VBox/SFXRow/SFXSlider
-@onready var back_button: Button = $VBox/BackButton
+@onready var back_button: Button = $BackButton
 
 
 func _ready() -> void:

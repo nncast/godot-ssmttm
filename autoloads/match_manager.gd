@@ -9,16 +9,66 @@ extends Node
 @export var MATCH_DURATION: float = 120.0
 @export var RESCUE_LOCK_FRACTION: float = 0.75  # rescues disabled after this fraction of time elapses
 @export var SYNC_INTERVAL: float = 0.25  # how often the server broadcasts the timer, in seconds
+@export var PREGAME_DURATION: float = 5.0  # role reveal + countdown before the clock starts
 
 signal time_updated(time_remaining: float, match_duration: float)
 signal rescues_locked
 signal match_started
 signal match_ended(sili_won: bool)
+signal pregame_started(duration: float)
+signal pregame_tick(seconds_left: int)
+signal pregame_finished
+signal sili_speed_changed(multiplier: float, stage: int)
 
 var time_remaining: float = 0.0
 var is_running: bool = false
+## True from the final whistle until the next round loads. Kept separate from
+## is_running because "the match stopped" and "the match is over" want different
+## answers: plenty of code checks is_running to decide whether to tick, but only
+## this one should keep hands off the controls while the result is on screen.
+var is_over: bool = false
+var is_pregame: bool = false
 var are_rescues_locked: bool = false
 var _sync_accumulator: float = 0.0
+var _pregame_remaining: float = 0.0
+var _sili_speed_stage: int = 0
+
+
+## The Sili gets faster as the clock runs down, so a Tubig who found a good
+## corner early can't simply sit there for two minutes. Each entry is
+## [seconds elapsed, speed multiplier]; they're checked in order and the last
+## one whose threshold has passed wins.
+##
+## Derived from time_remaining rather than broadcast separately: that value is
+## already synced to every peer, so all clients arrive at the same multiplier
+## on the same tick without another RPC to keep in step.
+## Retuned upward once the tunnel went in: a Tubig who reaches a mouth crosses
+## the map for free and resets a chase completely, so the Sili needs a harder
+## late game to keep the pressure curve. Starts sooner and tops out higher than
+## before (was 1.35x at 100s, in a 120s match).
+const SILI_SPEED_STAGES: Array = [
+	[0.0, 1.0],
+	[35.0, 1.12],
+	[60.0, 1.26],
+	[85.0, 1.42],
+	[105.0, 1.60],
+]
+
+
+func sili_speed_multiplier() -> float:
+	return float(SILI_SPEED_STAGES[_sili_speed_stage][1])
+
+
+func _update_sili_speed_stage() -> void:
+	var elapsed := MATCH_DURATION - time_remaining
+	var stage := 0
+	for i in SILI_SPEED_STAGES.size():
+		if elapsed >= float(SILI_SPEED_STAGES[i][0]):
+			stage = i
+	if stage == _sili_speed_stage:
+		return
+	_sili_speed_stage = stage
+	sili_speed_changed.emit(sili_speed_multiplier(), stage)
 
 
 func _is_networked() -> bool:
@@ -29,22 +79,45 @@ func _is_authority() -> bool:
 	return not _is_networked() or multiplayer.is_server()
 
 
+## Kicks off the pre-match reveal first; the real clock only starts once that
+## countdown expires (see _tick_pregame -> _begin_running). Set PREGAME_DURATION
+## to 0 to skip straight to gameplay.
 func start_match() -> void:
 	if not _is_authority():
 		return
-	time_remaining = MATCH_DURATION
-	is_running = true
-	are_rescues_locked = false
+
+	if PREGAME_DURATION <= 0.0:
+		_begin_running()
+		return
 
 	if _is_networked():
-		_rpc_start_match.rpc(MATCH_DURATION)
+		_rpc_start_pregame.rpc(PREGAME_DURATION)
 	else:
-		match_started.emit()
-		time_updated.emit(time_remaining, MATCH_DURATION)
+		_rpc_start_pregame(PREGAME_DURATION)
+
+
+## True while the reveal is on screen, and again once the match is decided. Both
+## player scripts check this, so covering the end state here is all it takes to
+## stop everyone where they stand under the result overlay - no separate freeze
+## logic in the movement code.
+func inputs_locked() -> bool:
+	return is_pregame or is_over
 
 
 func _process(delta: float) -> void:
-	if not is_running or not _is_authority():
+	if is_pregame:
+		_tick_pregame(delta)
+		return
+
+	if not is_running:
+		return
+
+	# Before the authority gate on purpose: clients never run the countdown
+	# themselves, but they do receive time_remaining, so they can work out the
+	# current speed stage locally instead of waiting on another broadcast.
+	_update_sili_speed_stage()
+
+	if not _is_authority():
 		return
 
 	time_remaining = max(0.0, time_remaining - delta)
@@ -73,6 +146,8 @@ func end_match(sili_won: bool) -> void:
 		return
 	is_running = false
 
+	is_over = true
+
 	if _is_networked():
 		_rpc_match_ended.rpc(sili_won)
 	else:
@@ -83,13 +158,57 @@ func rescues_available() -> bool:
 	return is_running and not are_rescues_locked
 
 
+## Every peer counts its own reveal down so the on-screen number is smooth
+## without a stream of sync packets - but only the server's copy is allowed to
+## decide the countdown is over and start the match, so a client with a slow
+## clock can never jump the gun.
+func _tick_pregame(delta: float) -> void:
+	var previous_second := int(ceil(_pregame_remaining))
+	_pregame_remaining = max(0.0, _pregame_remaining - delta)
+	var current_second := int(ceil(_pregame_remaining))
+
+	if current_second != previous_second:
+		pregame_tick.emit(current_second)
+
+	if _pregame_remaining <= 0.0 and _is_authority():
+		_begin_running()
+
+
+func _begin_running() -> void:
+	if _is_networked():
+		_rpc_start_match.rpc(MATCH_DURATION)
+	else:
+		_rpc_start_match(MATCH_DURATION)
+
+
 # --- Network broadcast handlers (run on every peer, including the server via call_local) ---
 
 @rpc("authority", "call_local", "reliable")
-func _rpc_start_match(duration: float) -> void:
-	is_running = true
+func _rpc_start_pregame(duration: float) -> void:
+	is_pregame = true
+	is_running = false
+	is_over = false
 	are_rescues_locked = false
+	_sili_speed_stage = 0
+	_pregame_remaining = duration
+	time_remaining = MATCH_DURATION
+	pregame_started.emit(duration)
+	pregame_tick.emit(int(ceil(duration)))
+	time_updated.emit(time_remaining, MATCH_DURATION)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_start_match(duration: float) -> void:
+	var was_pregame := is_pregame
+	is_pregame = false
+	_pregame_remaining = 0.0
+	is_running = true
+	is_over = false
+	are_rescues_locked = false
+	_sili_speed_stage = 0
 	time_remaining = duration
+	if was_pregame:
+		pregame_finished.emit()
 	match_started.emit()
 	time_updated.emit(time_remaining, duration)
 
@@ -109,4 +228,5 @@ func _rpc_rescues_locked() -> void:
 @rpc("authority", "call_local", "reliable")
 func _rpc_match_ended(sili_won: bool) -> void:
 	is_running = false
+	is_over = true
 	match_ended.emit(sili_won)
