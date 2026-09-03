@@ -21,7 +21,10 @@ const SFX_UI_HOVER: AudioStream = preload("res://assets/audio/ui/ui_hover.wav")
 const SFX_UI_CLICK: AudioStream = preload("res://assets/audio/ui/ui_click.wav")
 
 const CROSSFADE_TIME := 1.2
-const MUSIC_DB := -10.0  # Lowered from -6.0 to reduce music volume
+## Music sits well under the game now - background texture, not a score.
+## Footsteps and the ocean are the cues that carry information in a game about
+## hearing where someone is, so the music has to leave room for them.
+const MUSIC_DB := -20.0
 ## Hover fires constantly as the pointer sweeps a menu, so it sits well under
 ## the click and refuses to retrigger while the previous blip is still going.
 const HOVER_DB := -8.0   # Increased from -14.0 to make hovers louder

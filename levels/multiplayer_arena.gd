@@ -19,6 +19,7 @@ const DEAD_ROW_TINT := Color(0.55, 0.55, 0.55, 0.65)
 @onready var master_slider: HSlider = $HUD/SettingsPopup/VBox/MasterRow/MasterSlider
 @onready var music_slider: HSlider = $HUD/SettingsPopup/VBox/MusicRow/MusicSlider
 @onready var sfx_slider: HSlider = $HUD/SettingsPopup/VBox/SFXRow/SFXSlider
+@onready var ambience_slider: HSlider = $HUD/SettingsPopup/VBox/AmbienceRow/AmbienceSlider
 @onready var close_settings_button: Button = $HUD/SettingsPopup/VBox/CloseButton
 @onready var sili_spawner: MultiplayerSpawner = $SiliSpawner
 @onready var tubig_spawner: MultiplayerSpawner = $TubigSpawner
@@ -30,10 +31,6 @@ const DEAD_ROW_TINT := Color(0.55, 0.55, 0.55, 0.65)
 
 var _tubig_players: Array = []
 
-## Notices that hang off the clock readout. The timer label is rewritten on
-## every tick, so anything appended straight to its text vanished a frame
-## later - these get re-applied by _on_time_updated instead.
-var _label_notices: Array[String] = []
 
 ## Only used if Map/SpawnPoints is missing or has no marker for a role - the
 ## real positions come from the SpawnPoint nodes you drag around in the editor.
@@ -51,9 +48,7 @@ func _ready() -> void:
 	tubig_spawner.spawned.connect(_on_player_spawned)
 
 	MatchManager.time_updated.connect(_on_time_updated)
-	MatchManager.rescues_locked.connect(_on_rescues_locked)
 	MatchManager.match_ended.connect(_on_match_ended)
-	MatchManager.sili_speed_changed.connect(_on_sili_speed_changed)
 
 	_setup_settings_popup()
 
@@ -81,10 +76,12 @@ func _setup_settings_popup() -> void:
 	master_slider.value = GameSettings.master_volume
 	music_slider.value = GameSettings.music_volume
 	sfx_slider.value = GameSettings.sfx_volume
+	ambience_slider.value = GameSettings.ambience_volume
 
 	master_slider.value_changed.connect(GameSettings.set_master_volume)
 	music_slider.value_changed.connect(GameSettings.set_music_volume)
 	sfx_slider.value_changed.connect(GameSettings.set_sfx_volume)
+	ambience_slider.value_changed.connect(GameSettings.set_ambience_volume)
 
 	settings_button.pressed.connect(func(): settings_popup.visible = not settings_popup.visible)
 	close_settings_button.pressed.connect(func(): settings_popup.visible = false)
@@ -325,27 +322,13 @@ func _check_for_sili_win() -> void:
 func _on_time_updated(time_remaining: float, _match_duration: float) -> void:
 	var minutes := int(time_remaining) / 60
 	var seconds := int(time_remaining) % 60
+	# Just the clock now - tag/rescue/speed lines go to HUD/EventFeed, which has
+	# room to show what actually happened instead of a bare percentage.
 	match_label.text = "%d:%02d" % [minutes, seconds]
-	for notice in _label_notices:
-		match_label.text += "   " + notice
 
 
-func _add_label_notice(notice: String) -> void:
-	if not _label_notices.has(notice):
-		_label_notices.append(notice)
 
-
-func _on_rescues_locked() -> void:
-	_add_label_notice("(RESCUES LOCKED)")
-
-
-## Stage 0 is the match's starting speed, so there's nothing to announce.
-func _on_sili_speed_changed(multiplier: float, stage: int) -> void:
-	if stage <= 0:
-		return
-	_add_label_notice("SILI +%d%%" % roundi((multiplier - 1.0) * 100.0))
 
 
 func _on_match_ended(sili_won: bool) -> void:
-	_label_notices.clear()
 	match_label.text = "Sili wins!" if sili_won else "Tubig survives!"

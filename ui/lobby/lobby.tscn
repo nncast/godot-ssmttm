@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cu3cw3ejs0vip" path="res://ui/lobby/lobby.gd" id="1_lobby"]
 [ext_resource type="FontFile" uid="uid://dt8i0axtwshee" path="res://assets/fonts/BoldPixels.ttf" id="2_rdn6r"]
+[ext_resource type="Texture2D" uid="uid://dsswltwbq2fov" path="res://assets/ui/bg.jpg" id="3_8l8ni"]
 
 [node name="Lobby" type="Control" unique_id=1382473085]
 layout_mode = 3
@@ -58,3 +59,22 @@ layout_mode = 2
 theme_override_fonts/font = ExtResource("2_rdn6r")
 theme_override_font_sizes/font_size = 21
 text = "Leave"
+
+[node name="bg" type="TextureRect" parent="." unique_id=1012393935]
+modulate = Color(0.186459, 0.18645903, 0.18645895, 1)
+z_index = -1
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -608.0
+offset_top = -397.0
+offset_right = 3488.0
+offset_bottom = 2487.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.29266283, 0.29266283)
+mouse_filter = 2
+texture = ExtResource("3_8l8ni")

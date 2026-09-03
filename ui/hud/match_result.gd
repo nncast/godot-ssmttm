@@ -23,9 +23,6 @@ const BACKDROP_ALPHA := 0.72
 const COLOR_WIN := Color(1.0, 0.85, 0.35)
 const COLOR_LOSE := Color(1.0, 0.42, 0.38)
 
-const SFX_WIN := "res://assets/audio/special/yay_win.mp3"
-const SFX_LOSE := "res://assets/audio/special/faaah_lose.mp3"
-
 var _backdrop: ColorRect
 var _verdict_label: Label
 var _detail_label: Label
@@ -33,7 +30,6 @@ var _button_row: HBoxContainer
 var _replay_button: Button
 var _title_button: Button
 var _hint_label: Label
-var _sting: AudioStreamPlayer
 var _fade_tween: Tween
 
 
@@ -45,11 +41,6 @@ func _ready() -> void:
 	visible = false
 
 	_build_ui()
-
-	_sting = AudioStreamPlayer.new()
-	_sting.name = "Sting"
-	_sting.bus = "SFX"
-	add_child(_sting)
 
 	MatchManager.match_ended.connect(_on_match_ended)
 
@@ -142,7 +133,6 @@ func _on_match_ended(sili_won: bool) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_title_button.grab_focus()
 
-	_play_sting(i_won)
 	_start_slow_motion()
 
 	# ignore_time_scale, or the fade would crawl at the slowed rate and the
@@ -160,13 +150,6 @@ func _local_role() -> String:
 	var my_id := multiplayer.get_unique_id() if multiplayer.has_multiplayer_peer() else 1
 	return NetworkManager.roles.get(my_id, "tubig")
 
-
-func _play_sting(won: bool) -> void:
-	var path := SFX_WIN if won else SFX_LOSE
-	if not ResourceLoader.exists(path):
-		return
-	_sting.stream = load(path)
-	_sting.play()
 
 
 ## Eased rather than snapped: the moment of the tag reads better if the world

@@ -122,6 +122,7 @@ func _try_tag(body: Node2D) -> void:
 
 	_tag_cooldowns[body] = TAG_RETRY_COOLDOWN
 	tagged_target.emit(body)
+	MatchManager.broadcast_event("Sili tagged %s" % _name_of(body), "tag")
 
 
 func _update_tag_cooldowns(delta: float) -> void:
@@ -182,3 +183,12 @@ func get_direction_suffix(dir: Vector2) -> String:
 		return "ne"
 	else:
 		return "e"
+
+
+## Feed lines use the lobby name so the readout matches the team panel. Falls
+## back to the role when a peer id can't be resolved (offline test sessions).
+func _name_of(character: Node) -> String:
+	if character == null:
+		return "a Tubig"
+	var peer_id := character.get_multiplayer_authority()
+	return NetworkManager.players.get(peer_id, "Tubig")

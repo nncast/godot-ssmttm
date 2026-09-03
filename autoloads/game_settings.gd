@@ -9,6 +9,9 @@ const MIN_DB := -80.0
 var master_volume: float = 1.0
 var music_volume: float = 1.0
 var sfx_volume: float = 1.0
+## Ambience (the ocean loop) rides on its own bus under SFX, so this trims the
+## waves without touching footsteps or UI blips.
+var ambience_volume: float = 1.0
 
 
 func _ready() -> void:
@@ -25,6 +28,7 @@ func load_settings() -> void:
 	_apply_bus("Master", master_volume)
 	_apply_bus("Music", music_volume)
 	_apply_bus("SFX", sfx_volume)
+	_apply_bus("Ambience", ambience_volume)
 
 
 func save_settings() -> void:
@@ -32,6 +36,7 @@ func save_settings() -> void:
 	config.set_value("audio", "master", master_volume)
 	config.set_value("audio", "music", music_volume)
 	config.set_value("audio", "sfx", sfx_volume)
+	config.set_value("audio", "ambience", ambience_volume)
 	config.save(SETTINGS_PATH)
 
 
@@ -50,6 +55,12 @@ func set_music_volume(value: float) -> void:
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = value
 	_apply_bus("SFX", value)
+	save_settings()
+
+
+func set_ambience_volume(value: float) -> void:
+	ambience_volume = value
+	_apply_bus("Ambience", value)
 	save_settings()
 
 

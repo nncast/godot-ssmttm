@@ -5,6 +5,17 @@
 [ext_resource type="FontFile" uid="uid://dt8i0axtwshee" path="res://assets/fonts/BoldPixels.ttf" id="2_ffat2"]
 [ext_resource type="Texture2D" uid="uid://dsswltwbq2fov" path="res://assets/ui/bg.jpg" id="4_rhiq2"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jrkqb"]
+bg_color = Color(0.57254905, 0.44313726, 0.3764706, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.28235295, 0.14509805, 0.12941177, 1)
+corner_radius_top_left = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [node name="TitleScreen" type="Control" unique_id=1703636514]
 layout_mode = 3
 anchors_preset = 15
@@ -87,19 +98,19 @@ layout_mode = 2
 autowrap_mode = 2
 
 [node name="JoinPanel" type="PanelContainer" parent="." unique_id=1759550424]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -110.0
+offset_left = -116.0
 offset_top = -50.0
-offset_right = 110.0
-offset_bottom = 50.0
+offset_right = 116.0
+offset_bottom = 44.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_jrkqb")
 
 [node name="VBox" type="VBoxContainer" parent="JoinPanel" unique_id=839750030]
 layout_mode = 2
@@ -130,7 +141,6 @@ text = "Cancel"
 [node name="bg" type="TextureRect" parent="." unique_id=1938321079]
 modulate = Color(0.5227242, 0.5227243, 0.5227242, 1)
 z_index = -1
-mouse_filter = 2
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -144,6 +154,7 @@ offset_bottom = 2487.0
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(0.29266283, 0.29266283)
+mouse_filter = 2
 texture = ExtResource("4_rhiq2")
 
 [node name="ExitConfirm" type="ConfirmationDialog" parent="." unique_id=515213007]

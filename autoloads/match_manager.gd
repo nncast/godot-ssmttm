@@ -6,7 +6,14 @@ extends Node
 ## pushes updates out to everyone else via RPC. In single-player/local
 ## testing (no multiplayer peer set up) it just runs locally.
 
-@export var MATCH_DURATION: float = 120.0
+## Raised from 120s after looking at the speed curve. Both roles share the same
+## base speed (100 walk / 180 run), so until the Sili's multiplier is high
+## enough it cannot close on a Tubig who keeps running - the ramp is what makes
+## the match end, not the Sili's skill. The crossover where the Sili out-walks a
+## Tubig's walk arrives at 1.26x, which under the old 120s clock landed at the
+## 60s mark: half the match was spent unable to convert. 180s gives roughly
+## twice the effective hunting window without changing the top speed.
+@export var MATCH_DURATION: float = 180.0
 @export var RESCUE_LOCK_FRACTION: float = 0.75  # rescues disabled after this fraction of time elapses
 @export var SYNC_INTERVAL: float = 0.25  # how often the server broadcasts the timer, in seconds
 @export var PREGAME_DURATION: float = 5.0  # role reveal + countdown before the clock starts
@@ -19,6 +26,10 @@ signal pregame_started(duration: float)
 signal pregame_tick(seconds_left: int)
 signal pregame_finished
 signal sili_speed_changed(multiplier: float, stage: int)
+## Match feed lines. Routed through here rather than emitted by the players so
+## every peer sees the same events: a tag is detected on the Sili's client and a
+## rescue on the rescuer's, but both have to show up on everyone's screen.
+signal event_logged(message: String, kind: String)
 
 var time_remaining: float = 0.0
 var is_running: bool = false
@@ -48,15 +59,29 @@ var _sili_speed_stage: int = 0
 ## before (was 1.35x at 100s, in a 120s match).
 const SILI_SPEED_STAGES: Array = [
 	[0.0, 1.0],
-	[35.0, 1.12],
-	[60.0, 1.26],
-	[85.0, 1.42],
-	[105.0, 1.60],
+	[30.0, 1.12],
+	[65.0, 1.26],
+	[100.0, 1.42],
+	[135.0, 1.60],
 ]
 
 
 func sili_speed_multiplier() -> float:
 	return float(SILI_SPEED_STAGES[_sili_speed_stage][1])
+
+
+## Any peer may report an event; it's a cosmetic feed, so there's nothing worth
+## validating on the server and no reason to make clients round-trip for it.
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_log_event(message: String, kind: String) -> void:
+	event_logged.emit(message, kind)
+
+
+func broadcast_event(message: String, kind: String = "info") -> void:
+	if _is_networked():
+		_rpc_log_event.rpc(message, kind)
+	else:
+		_rpc_log_event(message, kind)
 
 
 func _update_sili_speed_stage() -> void:

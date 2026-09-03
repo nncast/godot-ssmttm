@@ -87,6 +87,7 @@ var _hidden_label: Label = null
 var _nearby_tunnel: Tunnel = null
 var _tunnel_cooldown: float = 0.0
 var _tunnel_prompt: Label = null
+var _rescue_prompt: Label = null
 ## Tracked per Tubig and spent locally, like stamina. Players are rebuilt when
 ## the arena reloads, so a replay hands everyone a fresh set.
 var tunnel_uses_left: int = TUNNEL_USES_MAX
@@ -181,6 +182,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("rescue"):
 		_try_use_tunnel()
 	_update_tunnel_prompt()
+	_update_rescue_prompt()
 
 	var is_moving := input_vector != Vector2.ZERO
 
@@ -256,6 +258,9 @@ func _complete_rescue() -> void:
 			else:
 				target_heat.cool_fully()
 		_rescue_target.rpc("show_rescue_progress", 0.0, 0.0)
+
+	MatchManager.broadcast_event(
+		"%s rescued %s" % [_own_name(), _name_of(_rescue_target)], "rescue")
 
 	rescues_left -= 1
 	_cancel_rescue_channel()
@@ -401,6 +406,54 @@ func _update_tunnel_prompt() -> void:
 	else:
 		_tunnel_prompt.text = "Tunnel used up"
 		_tunnel_prompt.modulate = Color(0.65, 0.65, 0.68)
+
+
+## Mirrors the tunnel prompt, one line higher so the two never overlap when a
+## burning ally happens to be standing in a tunnel mouth. Says "hold" because
+## rescuing is a channel, not a tap - without that, players tap E once, see
+## nothing happen and assume the rescue is broken.
+func _update_rescue_prompt() -> void:
+	var target := _find_burning_ally()
+	var can_rescue := target != null and rescues_left > 0 and MatchManager.rescues_available()
+
+	if _rescue_prompt == null:
+		if not can_rescue:
+			return
+		_rescue_prompt = Label.new()
+		_rescue_prompt.name = "RescuePrompt"
+		_rescue_prompt.anchor_left = 0.5
+		_rescue_prompt.anchor_right = 0.5
+		_rescue_prompt.anchor_top = 1.0
+		_rescue_prompt.anchor_bottom = 1.0
+		_rescue_prompt.offset_left = -110.0
+		_rescue_prompt.offset_right = 110.0
+		_rescue_prompt.offset_top = -158.0
+		_rescue_prompt.offset_bottom = -132.0
+		_rescue_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_rescue_prompt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		_rescue_prompt.add_theme_constant_override("outline_size", 5)
+		ui_layer.add_child(_rescue_prompt)
+
+	_rescue_prompt.visible = can_rescue
+	if not can_rescue:
+		return
+	if _is_channeling:
+		_rescue_prompt.text = "Rescuing... keep holding [E]"
+		_rescue_prompt.modulate = Color(0.52, 0.88, 0.62)
+	else:
+		_rescue_prompt.text = "Hold [E] to rescue"
+		_rescue_prompt.modulate = Color.WHITE
+
+
+func _own_name() -> String:
+	return _name_of(self)
+
+
+func _name_of(character: Node) -> String:
+	if character == null:
+		return "a Tubig"
+	var peer_id := character.get_multiplayer_authority()
+	return NetworkManager.players.get(peer_id, "Tubig")
 
 
 func _find_burning_ally() -> Node2D:
