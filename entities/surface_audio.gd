@@ -88,11 +88,14 @@ func _ready() -> void:
 	_step_player.attenuation = 2.0
 	add_child(_step_player)
 
-	if _is_local and ResourceLoader.exists(AMBIENCE_STREAM):
+	var ocean := AudioManager.load_ocean_loop() if _is_local else null
+	if ocean != null:
 		_ambience = AudioStreamPlayer.new()
 		_ambience.name = "Ambience"
 		_ambience.bus = "Ambience"
-		_ambience.stream = load(AMBIENCE_STREAM)
+		# Looping is forced by load_ocean_loop(); a one-shot here would fade in
+		# as you neared the water and then simply stop.
+		_ambience.stream = ocean
 		_ambience.volume_db = GameSettings.MIN_DB
 		add_child(_ambience)
 		_ambience.play()

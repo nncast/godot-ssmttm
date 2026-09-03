@@ -19,6 +19,13 @@ func _ready() -> void:
 	ambience_slider.value_changed.connect(GameSettings.set_ambience_volume)
 	back_button.pressed.connect(_on_back_pressed)
 
+	# So the Ambience slider has audible waves to act on while you're setting it.
+	AudioManager.start_ambience_preview()
+
+
+func _exit_tree() -> void:
+	AudioManager.stop_ambience_preview()
+
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://ui/title_screen/title_screen.tscn")

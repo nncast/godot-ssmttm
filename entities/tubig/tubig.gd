@@ -73,6 +73,9 @@ var _conceal_timer: float = 0.0
 var _sighting_accum: float = 0.0
 var _last_reported_sighting: bool = false
 var _hidden_label: Label = null
+## True while Burning or Dead. Grays out the last active heart as a tag
+## indicator, separate from rescues_left's own used/depleted greying.
+var _is_tagged: bool = false
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ui_layer: CanvasLayer = $ui
@@ -521,10 +524,20 @@ func _update_hearts(rescues_remaining: int) -> void:
 	for i in hearts.size():
 		# Fixed: Kept full white (1, 1, 1, 1) for active hearts so natural colors display,
 		# and dimmed only used/depleted hearts.
-		hearts[i].modulate = Color.WHITE if i < rescues_remaining else Color(0.25, 0.25, 0.25, 0.5)
+		if i < rescues_remaining:
+			# Tagged: grey out the last active heart as a burn indicator, on
+			# top of (not instead of) the used/depleted greying below.
+			if _is_tagged and i == rescues_remaining - 1:
+				hearts[i].modulate = Color(0.25, 0.25, 0.25, 0.5)
+			else:
+				hearts[i].modulate = Color.WHITE
+		else:
+			hearts[i].modulate = Color(0.25, 0.25, 0.25, 0.5)
 
 
 func _on_heat_state_changed(new_state: HeatStatus.State) -> void:
+	_is_tagged = new_state == HeatStatus.State.BURNING or new_state == HeatStatus.State.DEAD
+	_update_hearts(rescues_left)
 	if new_state == HeatStatus.State.BURNING:
 		animated_sprite.play("heat_" + last_direction)
 

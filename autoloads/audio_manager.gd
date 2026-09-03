@@ -19,6 +19,7 @@ const MUSIC_TITLE: AudioStream = preload("res://assets/audio/music/Music_Title.o
 const MUSIC_INGAME: AudioStream = preload("res://assets/audio/music/Music_Ingame.ogg")
 const SFX_UI_HOVER: AudioStream = preload("res://assets/audio/ui/ui_hover.wav")
 const SFX_UI_CLICK: AudioStream = preload("res://assets/audio/ui/ui_click.wav")
+const AMBIENCE_OCEAN := "res://assets/audio/ambiance/Ambiance_Ocean_Praia_dos_Moinhos_Loop_Stereo_02.wav"
 
 const CROSSFADE_TIME := 1.2
 ## Music sits well under the game now - background texture, not a score.
@@ -44,6 +45,7 @@ var _fade_tween: Tween
 var _ui_voices: Array[AudioStreamPlayer] = []
 var _ui_voice_index := 0
 var _last_hover_at := -1.0
+var _ambience_preview: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -180,6 +182,53 @@ func _play_ui(stream: AudioStream, volume_db: float) -> void:
 	voice.stream = stream
 	voice.volume_db = volume_db
 	voice.play()
+
+
+# --- Ambience ---------------------------------------------------------------
+
+## Loads the ocean loop with looping forced on in code as well as in the .import.
+## The import flag only takes effect on a reimport, so a project that already
+## has the old non-looping .sample cached would otherwise still play it once and
+## fall silent - which is exactly what "the waves stop" looks like.
+static func load_ocean_loop() -> AudioStream:
+	if not ResourceLoader.exists(AMBIENCE_OCEAN):
+		return null
+	var stream := load(AMBIENCE_OCEAN)
+	var wav := stream as AudioStreamWAV
+	if wav:
+		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		# A LOOP_FORWARD stream with loop_end still at 0 loops a zero-length
+		# region, which is silence rather than waves. Derive it from the clip
+		# length instead of the raw byte count - the file imports as compressed
+		# audio, so bytes-per-sample arithmetic would be wrong.
+		if wav.loop_end <= 0:
+			wav.loop_end = int(wav.get_length() * wav.mix_rate)
+	return stream
+
+
+## The waves normally only exist on the local player in the arena, so on the
+## settings screen the Ambience slider had nothing to act on - moving it did
+## nothing audible, which read as a broken slider. Playing a preview while that
+## screen is open gives it something to adjust.
+func start_ambience_preview() -> void:
+	if _ambience_preview and _ambience_preview.playing:
+		return
+	var stream := load_ocean_loop()
+	if stream == null:
+		return
+	if _ambience_preview == null:
+		_ambience_preview = AudioStreamPlayer.new()
+		_ambience_preview.name = "AmbiencePreview"
+		_ambience_preview.bus = "Ambience"
+		add_child(_ambience_preview)
+	_ambience_preview.stream = stream
+	_ambience_preview.volume_db = -4.0
+	_ambience_preview.play()
+
+
+func stop_ambience_preview() -> void:
+	if _ambience_preview:
+		_ambience_preview.stop()
 
 
 # --- Automatic button wiring ------------------------------------------------

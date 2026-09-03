@@ -282,27 +282,46 @@ func _build_team_panel() -> void:
 			heart_icons.append(heart)
 
 		var heat: HeatStatus = tubig.get_node_or_null("HeatStatus")
+
+		# True while Burning or Dead. Declared before update_hearts/update_dot
+		# so both closures can read and write it.
+		var is_tagged := false
+
+		var update_hearts := func(rescues_remaining: int):
+			for i in heart_icons.size():
+				if i < rescues_remaining:
+					# Tagged: grey out the last active heart as a burn
+					# indicator, on top of (not instead of) the
+					# used/depleted greying below.
+					if is_tagged and i == rescues_remaining - 1:
+						heart_icons[i].modulate = Color(0.25, 0.25, 0.25, 0.5)
+					else:
+						heart_icons[i].modulate = Color.WHITE
+				else:
+					heart_icons[i].modulate = Color(0.25, 0.25, 0.25, 0.5)
+
 		var update_dot := func(new_state):
 			match new_state:
 				HeatStatus.State.BURNING:
 					dot_style.bg_color = TUBIG_TAGGED_COLOR
 					row.modulate = Color.WHITE
+					is_tagged = true
 				HeatStatus.State.DEAD:
 					# Grey circle plus a grey row tint: the hearts and the name
 					# are near-white, so multiplying them down reads as the
 					# whole entry draining to greyscale.
 					dot_style.bg_color = TUBIG_DEAD_COLOR
 					row.modulate = DEAD_ROW_TINT
+					is_tagged = true
 				_:
 					dot_style.bg_color = TUBIG_FREE_COLOR
 					row.modulate = Color.WHITE
+					is_tagged = false
+			update_hearts.call(tubig.rescues_left)
 		if heat:
 			heat.state_changed.connect(update_dot)
 			update_dot.call(heat.state)
 
-		var update_hearts := func(rescues_remaining: int):
-			for i in heart_icons.size():
-				heart_icons[i].modulate = Color.WHITE if i < rescues_remaining else Color(0.25, 0.25, 0.25, 0.5)
 		tubig.rescues_changed.connect(update_hearts)
 		update_hearts.call(tubig.rescues_left)
 

@@ -17,7 +17,7 @@
 [ext_resource type="Script" uid="uid://b26ebr21jk5gu" path="res://levels/spawn_point.gd" id="16_spawnpt"]
 [ext_resource type="Script" uid="uid://iqa5e2sh803a" path="res://entities/tunnel/tunnel.gd" id="17_tunnel"]
 [ext_resource type="Script" uid="uid://bwr4vw5c3gkki" path="res://ui/hud/match_result.gd" id="18_result"]
-[ext_resource type="Script" path="res://ui/hud/event_feed.gd" id="19_feed"]
+[ext_resource type="Script" uid="uid://b4m220i2h3itl" path="res://ui/hud/event_feed.gd" id="19_feed"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0ycgb"]
 texture = ExtResource("12_s7cuy")
@@ -55666,7 +55666,7 @@ layout_mode = 2
 [node name="AmbienceLabel" type="Label" parent="HUD/SettingsPopup/VBox/AmbienceRow" unique_id=1600505165]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
-text = "Waves"
+text = "Ambience"
 
 [node name="AmbienceSlider" type="HSlider" parent="HUD/SettingsPopup/VBox/AmbienceRow" unique_id=863754628]
 layout_mode = 2
